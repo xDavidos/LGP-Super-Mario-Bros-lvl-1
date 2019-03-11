@@ -21,7 +21,7 @@ class Level1(tools._State):
     def __init__(self):
         tools._State.__init__(self)
 
-    def startup(self, current_time, persist):
+    def startup(self, current_time, persist, redraw):
         """Called when the State object is created"""
         self.game_info = persist
         self.persist = self.game_info
@@ -37,7 +37,8 @@ class Level1(tools._State):
 
         self.moving_score_list = []
         self.overhead_info_display = info.OverheadInfo(self.game_info, c.LEVEL)
-        self.sound_manager = game_sound.Sound(self.overhead_info_display)
+        if redraw:
+            self.sound_manager = game_sound.Sound(self.overhead_info_display)
 
         self.setup_background()
         self.setup_ground()
@@ -351,13 +352,14 @@ class Level1(tools._State):
                                                      self.enemy_group)
 
 
-    def update(self, surface, keys, current_time):
+    def update(self, surface, keys, current_time, redraw):
         """Updates Entire level using states.  Called by the control object"""
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
         self.handle_states(keys)
         self.check_if_time_out()
-        self.blit_everything(surface)
-        self.sound_manager.update(self.game_info, self.mario)
+        if redraw:
+            self.blit_everything(surface)
+            self.sound_manager.update(self.game_info, self.mario)
 
 
 
@@ -1327,6 +1329,8 @@ class Level1(tools._State):
 
 
     def play_death_song(self):
+        self.set_game_info_values()
+        self.done = True
         if self.death_timer == 0:
             self.death_timer = self.current_time
         elif (self.current_time - self.death_timer) > 3000:

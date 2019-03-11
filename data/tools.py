@@ -4,18 +4,19 @@ import os
 import pygame as pg
 
 keybinding = {
-    'action':pg.K_s,
-    'jump':pg.K_a,
-    'left':pg.K_LEFT,
-    'right':pg.K_RIGHT,
-    'down':pg.K_DOWN
+    'action':1,
+    'jump':2,
+    'left':3,
+    'right':4,
+    'down':5,
+    'still':6
 }
 
 class Control(object):
     """Control class for entire project. Contains the game loop, and contains
     the event_loop which passes events to States as needed. Logic for flipping
     states is also found here."""
-    def __init__(self, caption):
+    def __init__(self, caption, redraw):
         self.screen = pg.display.get_surface()
         self.done = False
         self.clock = pg.time.Clock()
@@ -23,10 +24,13 @@ class Control(object):
         self.fps = 60
         self.show_fps = False
         self.current_time = 0.0
-        self.keys = pg.key.get_pressed()
+        self.action_start_time = 0.0
+        self.current_action_idx = 0
+        self.keys = keybinding['still']
         self.state_dict = {}
         self.state_name = None
         self.state = None
+        self.redraw = redraw
 
     def setup_states(self, state_dict, start_state):
         self.state_dict = state_dict
@@ -35,26 +39,40 @@ class Control(object):
 
     def update(self):
         self.current_time = pg.time.get_ticks()
-        if self.state.quit:
+        if self.state.quit or self.state.game_info['mario dead']:
             self.done = True
         elif self.state.done:
             self.flip_state()
-        self.state.update(self.screen, self.keys, self.current_time)
+        self.state.update(self.screen, self.keys, self.current_time, self.redraw)
 
     def flip_state(self):
         previous, self.state_name = self.state_name, self.state.next
         persist = self.state.cleanup()
         self.state = self.state_dict[self.state_name]
-        self.state.startup(self.current_time, persist)
+        self.state.startup(self.current_time, persist, self.redraw)
         self.state.previous = previous
 
 
-    def event_loop(self):
+    def event_loop(self, chromosome):
+
+        if self.action_start_time == 0.0:
+            self.action_start_time = self.current_time
+            self.keys = chromosome[self.current_action_idx]
+        elif self.current_time - self.action_start_time > chromosome[self.current_action_idx+1]:
+            self.current_action_idx += 2
+            if self.current_action_idx <= len(chromosome)-1:
+                self.action_start_time = self.current_time
+                #print "Action idx", self.current_action_idx
+                self.keys = chromosome[self.current_action_idx]
+            else:
+                self.done = True
+
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.done = True
             elif event.type == pg.KEYDOWN:
-                self.keys = pg.key.get_pressed()
+                # self.keys = pg.key.get_pressed()
                 self.toggle_show_fps(event.key)
             elif event.type == pg.KEYUP:
                 self.keys = pg.key.get_pressed()
@@ -68,18 +86,19 @@ class Control(object):
                 pg.display.set_caption(self.caption)
 
 
-    def main(self):
+    def main(self, chromosome):
         """Main loop for entire program"""
         while not self.done:
-            self.event_loop()
+            self.event_loop(chromosome)
             self.update()
-            pg.display.update()
+            if self.redraw:
+                pg.display.update()
             self.clock.tick(self.fps)
             if self.show_fps:
                 fps = self.clock.get_fps()
                 with_fps = "{} - {:.2f} FPS".format(self.caption, fps)
                 pg.display.set_caption(with_fps)
-
+        return self.state.viewport.x, self.current_time
 
 class _State(object):
     def __init__(self):

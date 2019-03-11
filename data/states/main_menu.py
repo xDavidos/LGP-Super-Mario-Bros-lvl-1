@@ -88,7 +88,7 @@ class Menu(tools._State):
         return (image, rect)
 
 
-    def update(self, surface, keys, current_time):
+    def update(self, surface, keys, current_time, redraw):
         """Updates the state every refresh"""
         self.current_time = current_time
         self.game_info[c.CURRENT_TIME] = self.current_time
@@ -102,19 +102,18 @@ class Menu(tools._State):
         surface.blit(self.cursor.image, self.cursor.rect)
         self.overhead_info.draw(surface)
 
-
     def update_cursor(self, keys):
         """Update the position of the cursor"""
-        input_list = [pg.K_RETURN, pg.K_a, pg.K_s]
-
+        input_list = [1]
         if self.cursor.state == c.PLAYER1:
             self.cursor.rect.y = 358
-            if keys[pg.K_DOWN]:
-                self.cursor.state = c.PLAYER2
-            for input in input_list:
-                if keys[input]:
-                    self.reset_game_info()
-                    self.done = True
+            # if keys[pg.K_DOWN]:
+            #    self.cursor.state = c.PLAYER2
+            # for input in input_list:
+            #    if keys[input]:
+            self.reset_game_info()
+            self.done = True
+
         elif self.cursor.state == c.PLAYER2:
             self.cursor.rect.y = 403
             if keys[pg.K_UP]:
@@ -125,7 +124,7 @@ class Menu(tools._State):
         """Resets the game info in case of a Game Over and restart"""
         self.game_info[c.COIN_TOTAL] = 0
         self.game_info[c.SCORE] = 0
-        self.game_info[c.LIVES] = 3
+        self.game_info[c.LIVES] = 1
         self.game_info[c.CURRENT_TIME] = 0.0
         self.game_info[c.LEVEL_STATE] = None
 
