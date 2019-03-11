@@ -12,6 +12,8 @@ Each instruction is encoded in a chromosome and after every generation altered b
 Here you can find a video
 https://youtu.be/il1BNu5ma-U showing one solution that the algorithm converged to.
 
+run the file lgp_optimization.py to start training.
+
 DEPENDENCIES:
 
 Pygame 1.9.1 (Python 2)
